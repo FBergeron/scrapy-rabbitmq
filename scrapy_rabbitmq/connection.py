@@ -5,6 +5,8 @@ try:
 except ImportError:
     raise ImportError("Please install pika before running scrapy-rabbitmq.")
 
+from pika.adapters.tornado_connection import TornadoConnection
+from pika.adapters.twisted_connection import TwistedProtocolConnection
 
 RABBITMQ_CONNECTION_TYPE = 'blocking'
 RABBITMQ_QUEUE_NAME = 'scrapy_queue'
@@ -49,8 +51,8 @@ def from_settings(settings):
         'blocking': pika.BlockingConnection,
         'libev': pika.LibevConnection,
         'select': pika.SelectConnection,
-        'tornado': pika.TornadoConnection,
-        'twisted': pika.TwistedConnection
+        'tornado': TornadoConnection,
+        'twisted': TwistedProtocolConnection
     }[connection_type](pika.ConnectionParameters(**connection_parameters))
 
     channel = connection.channel()
