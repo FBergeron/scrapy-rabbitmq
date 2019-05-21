@@ -1,8 +1,7 @@
-__author__ = 'roycehaynes'
-
 import connection
 
-from scrapy.spider import Spider
+from scrapy import Spider
+from scrapy.http import Request
 from scrapy import signals
 from scrapy.exceptions import DontCloseSpider
 
@@ -11,7 +10,12 @@ class RabbitMQMixin(object):
     """ A RabbitMQ Mixin used to read URLs from a RabbitMQ queue.
     """
 
-    rabbitmq_key = None
+    """
+        Overrided in subclass
+    """
+    rabbitmq_key = None 
+    redis_batch_size = None
+    redis_encoding = None
 
     def __init__(self):
         self.server = None
@@ -30,27 +34,33 @@ class RabbitMQMixin(object):
         self.crawler.signals.connect(self.spider_idle, signal=signals.spider_idle)
         self.crawler.signals.connect(self.item_scraped, signal=signals.item_scraped)
 
-    def next_request(self):
+    def make_ackable_request(self, url, method, properties):
+        return [Request(url = url, meta = {"delivery_tag": method.delivery_tag})]
+
+    def start_requests(self):
+        return self.next_requests()
+
+    def next_requests(self):
         """ Provides a request to be scheduled.
         :return: Request object or None
         """
 
-        method_frame, header_frame, url = self.server.basic_get(queue=self.rabbitmq_key)
+        method, properties, body = self.server.basic_get(queue=self.rabbitmq_key)
 
         # TODO(royce): Remove print
-        print url
+        print body
 
-        if url:
-            return self.make_requests_from_url(url)
+        if body:
+            return self.make_ackable_request(body, method, properties)
 
-    def schedule_next_request(self):
+    def schedule_next_requests(self):
         """ Schedules a request, if exists.
 
         :return:
         """
-        req = self.next_request()
+        req = self.next_requests()
 
-        if req:
+        for req in self.next_requests():
             self.crawler.engine.crawl(req, spider=self)
 
     def spider_idle(self):
@@ -58,7 +68,7 @@ class RabbitMQMixin(object):
 
         :return: None
         """
-        self.schedule_next_request()
+        self.schedule_next_requests()
         raise DontCloseSpider
 
     def item_scraped(self, *args, **kwargs):
@@ -67,12 +77,19 @@ class RabbitMQMixin(object):
         :param kwargs:
         :return: None
         """
-        self.schedule_next_request()
+        self.schedule_next_requests()
 
 
 class RabbitMQSpider(RabbitMQMixin, Spider):
     """ Spider that reads urls from RabbitMQ queue when idle.
     """
+
+    @classmethod
+    def from_crawler(self, crawler, *args, **kwargs):
+        obj = super(RabbitMQSpider, self).from_crawler(crawler, *args, **kwargs)
+        obj.setup_rabbitmq()
+        return obj
+ 
 
     def set_crawler(self, crawler):
         super(RabbitMQSpider, self).set_crawler(crawler)
