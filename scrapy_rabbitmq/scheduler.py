@@ -1,6 +1,6 @@
 __author__ = 'roycehaynes'
 
-import connection
+from . import connection
 
 from scrapy.utils.misc import load_object
 from scrapy_rabbitmq.dupefilter import RFPDupeFilter

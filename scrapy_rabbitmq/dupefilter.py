@@ -1,5 +1,5 @@
 import time
-import connection
+from . import connection
 
 from scrapy.dupefilters import BaseDupeFilter
 from scrapy.utils.request import request_fingerprint

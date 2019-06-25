@@ -1,4 +1,4 @@
-import connection
+from . import connection
 
 from scrapy import Spider
 from scrapy.http import Request
@@ -48,10 +48,12 @@ class RabbitMQMixin(object):
         method, properties, body = self.server.basic_get(queue=self.rabbitmq_key)
 
         # TODO(royce): Remove print
-        print body
+        print(body)
 
         if body:
             return self.make_ackable_request(body, method, properties)
+
+        return []
 
     def schedule_next_requests(self):
         """ Schedules a request, if exists.

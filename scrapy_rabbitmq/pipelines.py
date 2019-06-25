@@ -1,5 +1,5 @@
 
-import connection
+from . import connection
 
 from twisted.internet.threads import deferToThread
 from scrapy.utils.serialize import ScrapyJSONEncoder
