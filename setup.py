@@ -24,6 +24,7 @@ packages = [
 ]
 
 requires = [
+    'tornado',
     'pika',
     'Scrapy>=0.14'
 ]
@@ -32,7 +33,7 @@ setup(
     name='scrapy-rabbitmq',
     author='Royce Haynes',
     description='RabbitMQ Plug-in for Scrapy',
-    version='0.1.5',
+    version='0.1.6',
     author_email='royce.haynes@gmail.com',
     license='MIT',
     url='https://github.com/roycehaynes/scrapy-rabbitmq',
